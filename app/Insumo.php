@@ -6,8 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class Insumo extends Model
 {
-	protected $fillable = ['nombre'];
-	protected $fillable = ['medida'];
-	protected $fillable = ['cantidad'];
-
+	protected $fillable = ['nombre','descripcion','cantidad','precio','unidad_id'];
 }
