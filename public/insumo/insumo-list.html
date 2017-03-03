@@ -1,0 +1,79 @@
+
+<!-- DataTables CSS -->
+<link
+	href="bootstrap-sb/vendor/datatables-plugins/dataTables.bootstrap.css"
+	rel="stylesheet">
+
+<!-- DataTables Responsive CSS -->
+<link
+	href="bootstrap-sb/vendor/datatables-responsive/dataTables.responsive.css"
+	rel="stylesheet">
+
+<div id="page-wrapper">
+	<div class="row">
+		<div class="col-lg-12">
+			<h1 class="page-header">Insumos</h1>
+		</div>
+		<!-- /.col-lg-12 -->
+	</div>
+	<!-- /.row -->
+	<div class="row">
+		<div class="col-lg-12">
+			<div class="panel panel-default">
+				<div class="panel-heading">Listado de Insumos</div>
+				<!-- /.panel-heading -->
+				<div class="panel-body">
+					<table width="100%"
+						class="table table-striped table-bordered table-hover"
+						id="dataTables-example">
+						<thead>
+							<tr>
+								<th>Nombre</th>
+								<th>Descripción</th>
+<!-- 								<th>Unidad</th>
+ -->								<th>Cantidad</th>
+								<th>Precio</th>
+								<th>Acciones</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr ng-repeat="insumo in insumos" class="gradeX">
+								<td><span editable-text="insumo.nombre" e-name="nombre"
+									e-form="rowform"> {{ insumo.nombre }} </span></td>
+								<td><span editable-text="insumo.descripcion"
+									e-name="descripcion" e-form="rowform"> {{
+										insumo.descripcion }} </span></td>
+<!-- 								<td><span editable-text="insumo.unidad_id" e-name="unidad_id"
+									e-form="rowform"> {{ insumo.unidad_id }} </span></td>
+ -->								<td><span editable-text="insumo.cantidad" e-name="cantidad"
+									e-form="rowform"> {{ insumo.cantidad }} </span></td>
+								<td><span editable-text="insumo.precio" e-name="precio"
+									e-form="rowform"> {{ insumo.precio }} </span></td>
+								<td style="white-space: nowrap">
+									<form editable-form name="rowform" 
+										onbeforesave="save(insumo.id, insumo)"
+										ng-show="rowform.$visible" class="form-buttons form-inline"
+										shown="inserted == insumo" >
+										<button type="submit" ng-disabled="rowform.$invalid"
+											class="btn btn-primary">Guardar</button>
+										<button type="button" ng-disabled="rowform.$waiting"
+											ng-click="cancel();rowform.$cancel()" class="btn btn-default">
+											Cancelar</button>
+									</form>
+									<div class="buttons" ng-show="!rowform.$visible">
+										<button type="button" class="btn btn-primary"
+											ng-click="rowform.$show()">Editar</button>
+										<button type="button" class="btn btn-danger"
+											ng-click="delete(insumo.id)">Eliminar</button>
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<button type="button" class="btn btn-default" ng-click="addInsumo()">Agregar Insumo</button>
+
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
