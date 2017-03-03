@@ -20,16 +20,6 @@ Route::get ( 'insumos/create', 'InsumosController@create');
 
 Route::post ('insumos', 'InsumosController@store');
 
-// API routes...
-Route::get('/api/v1/insumos/{id?}', [function($id = null) {
-	if ($id == null) {
-		$insumos = App\Insumo::all(array('id', 'nombre', 'descripcion'));
-	} else {
-		$insumos = App\Insumo::find($id, array('id', 'nombre', 'descripcion'));
-	}
-	return Response::json(array(
-			'error' => false,
-			'insumos' => $insumos,
-			'status_code' => 200
-	));
-}]);
+Route::get('/api/v1/insumos/{id?}', 'InsumosRestController@index');
+
+Route::post('/api/v1/insumos', 'InsumosRestController@store');
