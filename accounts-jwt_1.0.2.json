@@ -1,0 +1,1211 @@
+{
+  "otro": "bla",
+  "swagger": "2.0",
+  "info": {
+    "x-ibm-name": "accounts-jwt",
+    "title": "Accounts JWT-Profile",
+    "version": "1.0.2",
+    "x-santander-mode": "L",
+    "description": "Allows your customers to know the list of his/her list of current and saving accounts, their balances and transactions in Santander.",
+    "x-santander-atlas-id": "",
+    "x-santander-atlas-description": "San APIs infrastructure acts as a interconnection Gateway to the Banks of the Group:\n  - Partners or Consumers Partners subscribe SAN APIs from the Gateway\n  - Gateway will use the Berlin Group specification"
+  },
+  "schemes": [
+    "https"
+  ],
+  "host": "$(catalog.host)",
+  "basePath": "/",
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "securityDefinitions": {
+    "JWTProfile": {
+      "type": "oauth2",
+      "description": "OAuth Grant type, JWT Profile",
+      "flow": "implicit",
+      "scopes": {
+        "acclist.read": "Accounts static scope. Accounts list.",
+        "accdet.read": "Accounts static scope. Account details.",
+        "acctran.read": "Accounts static scope. Account transactions list and account transaction details."
+      },
+      "authorizationUrl": "https://api-sandbox.santander.com/santander/external/oauth/token",
+      "x-tokenIntrospect": {
+        "url": "$(security-url)"
+      }
+    },
+    "X-IBM-Client-Id": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "X-IBM-Client-Id",
+      "description": "Client id header."
+    }
+  },
+  "security": [
+    {
+      "X-IBM-Client-Id": []
+    }
+  ],
+  "x-ibm-configuration": {
+    "testable": true,
+    "enforced": true,
+    "cors": {
+      "enabled": true
+    },
+    "assembly": {
+      "execute": [
+        {
+          "get-properties": {
+            "version": "1.0.0"
+          }
+        },
+        {
+          "sg-jwt_san-api_create": {
+            "version": "1.0.1",
+            "user": "user",
+            "aud": "accounts"
+          }
+        },
+        {
+          "propagate-introspect-info": {
+            "attributes": [
+              {
+                "values": "local_client_id",
+                "headers": "X-Santander-LocalClid",
+                "mandatory": true
+              },
+              {
+                "values": "country",
+                "headers": "X-Santander-Country",
+                "mandatory": true
+              }
+            ],
+            "version": "1.0.0"
+          }
+        },
+        {
+          "proxy": {
+            "title": "proxy",
+            "timeout": 60,
+            "verb": "keep",
+            "cache-response": "protocol",
+            "cache-ttl": 900,
+            "version": "1.0.0",
+            "target-url": "$(target-url)$(request.path)"
+          }
+        }
+      ]
+    },
+    "phase": "realized",
+    "properties": {
+      "target-url": {
+        "value": "$(target-url)",
+        "description": "",
+        "encoded": false
+      }
+    }
+  },
+  "paths": {
+    "/me/accounts": {
+      "x-typology": "COMPOSITION",
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/accountsListResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          }
+        },
+        "summary": "Allows merchants to show Accounts list Inquiry of Santander customers. Retrieve current accounts list.",
+        "description": "Gets accounts list. In order to perform this operation, it is neccesary to provide a savings or current account number (several formats are allowed). Please note that the API will return the info according to the default language for each Santander local bank, as per the following list: - Santander Spain: es-ES - Santander UK: en-GB - Santander Brazil: pt-BR - Santander Mexico: es-MX - Santander Polonia : pl-PL",
+        "parameters": [
+          {
+            "$ref": "#/parameters/Authorization"
+          },
+          {
+            "$ref": "#/parameters/X-Santander-Global-Id"
+          },
+          {
+            "name": "_offset",
+            "type": "string",
+            "required": false,
+            "in": "query",
+            "description": "This field indicates to skip that many rows before beginning to return rows. If this field is omitted, first page will be return."
+          },
+          {
+            "name": "_limit",
+            "type": "string",
+            "required": false,
+            "in": "query",
+            "description": "This field indicates the maximum rows returned in response, it means, no more than that many rows will be returned (but possibly less, if the query itself yields less rows). It will return 5 rows by default."
+          },
+          {
+            "name": "_expand",
+            "type": "string",
+            "required": false,
+            "in": "query",
+            "description": "If value is \"balances\", shows the following balance types: available balance, pending balance, withholding balance, overdraft limit and overdraft available. By default it will not show balances."
+          }
+        ],
+        "security": [
+          {
+            "JWTProfile": [
+              "acclist.read"
+            ]
+          }
+        ]
+      }
+    },
+    "/me/accounts/{account_id}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/accountDetailsResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          }
+        },
+        "summary": "Allows merchants to show the Balances Account list Inquiry of Santander customers. Retrieve currents accounts balances.",
+        "description": "Gets basic information an account. In order to perform this operation, it is neccesary to provide a savings or current account number (several formats are allowed). Please note that the API will return the info according to the default language for each Santander local bank, as per the following list: - Santander Spain: es-ES - Santander UK: en-GB - Santander Brazil: pt-BR - Santander Mexico: es-MX - Santander Polonia : pl-PL",
+        "security": [
+          {
+            "JWTProfile": [
+              "accdet.read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/parameters/Authorization"
+          },
+          {
+            "$ref": "#/parameters/X-Santander-Global-Id"
+          },
+          {
+            "name": "account_id",
+            "type": "string",
+            "required": true,
+            "in": "path",
+            "description": "Account number identification."
+          },
+          {
+            "name": "include_last_transactions",
+            "type": "boolean",
+            "required": false,
+            "in": "query",
+            "description": "Indicator to get latest transactions. The value by default is false and the latestTransactions object will be empty.  Shows five transactions."
+          },
+          {
+            "name": "_expand",
+            "type": "string",
+            "required": false,
+            "in": "query",
+            "description": "If value is \"cards\", shows the related cards of current account. By default it will not show the related cards."
+          }
+        ]
+      }
+    },
+    "/me/accounts/{account_id}/transactions": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/transactionsListResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          }
+        },
+        "security": [
+          {
+            "JWTProfile": [
+              "acctran.read"
+            ]
+          }
+        ],
+        "summary": "Account transaction  list Inquiry, Allows filtering by date period, transaction type and amount.",
+        "description": "It provides the account transaction list sorted by operation date. Allows filtering by operation date, transaction type, currency and amount. The account number should be provided as input, and can be restricted incorporating time period (start and end dates), transaction type, amount and currency. Choosing whether you want to sort descending or ascending by date.",
+        "parameters": [
+          {
+            "$ref": "#/parameters/Authorization"
+          },
+          {
+            "$ref": "#/parameters/X-Santander-Global-Id"
+          },
+          {
+            "name": "account_id",
+            "type": "string",
+            "required": true,
+            "in": "path",
+            "description": "Account number identification."
+          },
+          {
+            "name": "_offset",
+            "type": "string",
+            "required": false,
+            "in": "query",
+            "description": "This field indicates to skip that many rows before beginning to return rows. If this field is omitted, first page will be return."
+          },
+          {
+            "name": "_limit",
+            "type": "string",
+            "required": false,
+            "in": "query",
+            "description": "This field indicates the maximum rows returned in response, it means, no more than that many rows will be returned (but possibly less, if the query itself yields less rows). It will return 20 rows by default."
+          },
+          {
+            "name": "from_date",
+            "type": "string",
+            "required": false,
+            "in": "query",
+            "description": "Start date period to be considered for the retrieve of transaction (YYYY-MM-DDTHH:MM:SS±00:00). If this field and to_date is not poblated will be listed 2 years data. ISO 8601: https://en.wikipedia.org/wiki/ISO_8601"
+          },
+          {
+            "name": "to_date",
+            "type": "string",
+            "required": false,
+            "in": "query",
+            "description": "End date period to be considered for the retrieve of transaction (YYYY-MM-DDTHH:MM:SS±00:00). If this field and from_date is not poblated will be listed 2 years data. ISO 8601: https://en.wikipedia.org/wiki/ISO_8601"
+          },
+          {
+            "name": "from_amount",
+            "type": "number",
+            "required": false,
+            "in": "query",
+            "description": "Minimum amount of transactions to recover. Allows negative and positive amount",
+            "format": "double"
+          },
+          {
+            "name": "to_amount",
+            "type": "number",
+            "required": false,
+            "in": "query",
+            "description": "Maximun amount of transactions to retrieve. Allows negative and positive amount",
+            "format": "double"
+          },
+          {
+            "name": "_sort",
+            "type": "string",
+            "required": false,
+            "in": "query",
+            "description": "This field allows sorting the results attending to the transaction´s operation date. Allowed +date ascending or -date descending."
+          },
+          {
+            "name": "transaction_type",
+            "type": "string",
+            "required": false,
+            "in": "query",
+            "description": "Represents if the transaction increases (Credit) or decreases (Debit)  the balance of the account. Allowed values: credit, debit or pending. If this field is empty, all results are showed. It can not be compatible with fields from_amount or to_mount"
+          }
+        ]
+      }
+    },
+    "/me/accounts/{account_id}/transactions/{transaction_id}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/transactionDetailsResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "schema": {
+              "$ref": "#/definitions/errors"
+            }
+          }
+        },
+        "summary": "Retrieve the detail an transaction of account.",
+        "description": "Get detail of account transaction  In order to perform this operation it is neccesary to provide a savings or current account number (several formats are allowed) and  transaction reference identificaction should be provided as input.",
+        "parameters": [
+          {
+            "$ref": "#/parameters/Authorization"
+          },
+          {
+            "$ref": "#/parameters/X-Santander-Global-Id"
+          },
+          {
+            "name": "account_id",
+            "type": "string",
+            "required": true,
+            "in": "path",
+            "description": "Account number identification."
+          },
+          {
+            "name": "transaction_id",
+            "type": "string",
+            "required": true,
+            "in": "path",
+            "description": "Internal reference of transaction."
+          }
+        ],
+        "security": [
+          {
+            "JWTProfile": [
+              "acctran.read"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "accountsListResponse": {
+      "properties": {
+        "accountsDataList": {
+          "$ref": "#/definitions/accountsDataList"
+        },
+        "_links": {
+          "$ref": "#/definitions/accountsListLinks"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Accounts list response."
+    },
+    "accountsDataList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/accountsDataDetails"
+      },
+      "description": "List of customer´s accounts"
+    },
+    "accountsDataDetails": {
+      "properties": {
+        "displayNumber": {
+          "type": "string",
+          "example": "00***384",
+          "description": "Number account identification."
+        },
+        "accountId": {
+          "type": "string",
+          "example": "abcdefghijklmnopqrstuvwxyz",
+          "description": "Tokenized account number."
+        },
+        "alias": {
+          "type": "string",
+          "example": "MY CHEQUING ACCOUNT",
+          "description": "Name asigned  to the account by the client to identify it easily."
+        },
+        "type": {
+          "type": "string",
+          "example": "TRADITIONAL_ACCOUNT",
+          "description": "Account type."
+        },
+        "description": {
+          "type": "string",
+          "example": "TRADITIONAL ACCOUNT",
+          "description": "Account description."
+        },
+        "status": {
+          "type": "string",
+          "example": "ACTIVE",
+          "description": "Current status."
+        },
+        "mainBalance": {
+          "$ref": "#/definitions/money"
+        },
+        "availableBalance": {
+          "$ref": "#/definitions/money"
+        },
+        "pendingBalance": {
+          "$ref": "#/definitions/money"
+        },
+        "withholdingBalance": {
+          "$ref": "#/definitions/money"
+        },
+        "overdraftLimit": {
+          "$ref": "#/definitions/money"
+        },
+        "_links": {
+          "$ref": "#/definitions/accountsDataDetailsLinks"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Details of an account.",
+      "required": [
+        "displayNumber"
+      ]
+    },
+    "accountsDataDetailsLinks": {
+      "properties": {
+        "accountDetailsLink": {
+          "type": "string",
+          "example": "/me/accounts/{account_id}",
+          "description": "Link to account details."
+        },
+        "transactionsListLink": {
+          "type": "string",
+          "example": "/me/accounts/{account_id}/transactions",
+          "description": "Link to transactions list."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Account and transactions details."
+    },
+    "accountsListLinks": {
+      "properties": {
+        "_first": {
+          "type": "string",
+          "description": "Link to navigates to the first page according to input parameters.",
+          "example": "/me/accounts?_offset=0"
+        },
+        "_prev": {
+          "type": "string",
+          "description": "Link to navigates to the previous page according to input parameters.",
+          "example": "/me/accounts?_offset=0"
+        },
+        "_next": {
+          "type": "string",
+          "description": "Link to navigates to the next page according to input parameters.",
+          "example": "/me/accounts?_offset=1"
+        },
+        "_last": {
+          "type": "string",
+          "description": "Link to navigates to the last page according to input parameters.",
+          "example": "/me/accounts?_offset=99"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Accounts list pagination.",
+      "required": [
+        "_prev",
+        "_next"
+      ]
+    },
+    "money": {
+      "properties": {
+        "amount": {
+          "type": "number",
+          "description": "Amount",
+          "format": "double",
+          "example": 1234.55
+        },
+        "currencyCode": {
+          "type": "string",
+          "description": "Currency codes - ISO 4217. https://en.wikipedia.org/wiki/ISO_4217",
+          "example": "MXN"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Object that indicates amount and currency."
+    },
+    "accountDetailsResponse": {
+      "properties": {
+        "displayNumber": {
+          "type": "string",
+          "example": "00***384",
+          "description": "Number account identification."
+        },
+        "accountId": {
+          "type": "string",
+          "example": "abcdefghijklmnopqrstuvwxyz",
+          "description": "Tokenized account number."
+        },
+        "alias": {
+          "type": "string",
+          "example": "MY CHEQUING ACCOUNT",
+          "description": "Name asigned  to the account by the client to identify it easily."
+        },
+        "type": {
+          "type": "string",
+          "example": "TRADITIONAL_ACCOUNT",
+          "description": "Account type."
+        },
+        "description": {
+          "type": "string",
+          "example": "TRADITIONAL ACCOUNT",
+          "description": "Account description."
+        },
+        "status": {
+          "type": "string",
+          "example": "ACTIVE",
+          "description": "Current status."
+        },
+        "relatedCards": {
+          "$ref": "#/definitions/relatedCards"
+        },
+        "mainBalance": {
+          "$ref": "#/definitions/balance"
+        },
+        "availableBalance": {
+          "$ref": "#/definitions/balance"
+        },
+        "pendingBalance": {
+          "$ref": "#/definitions/balance"
+        },
+        "withholdingBalance": {
+          "$ref": "#/definitions/balance"
+        },
+        "overdraftLimit": {
+          "$ref": "#/definitions/balance"
+        },
+        "latestTransactions": {
+          "$ref": "#/definitions/latestTransactions"
+        },
+        "transactionsListLink": {
+          "type": "string",
+          "example": "/me/accounts/{account_id}/transactions",
+          "description": "Link to transactions list."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Account details response."
+    },
+    "accountDetailsResponseMex": {
+      "properties": {
+        "displayNumber": {
+          "type": "string",
+          "example": "00***384",
+          "description": "Number account identification."
+        },
+        "accountId": {
+          "type": "string",
+          "example": "abcdefghijklmnopqrstuvwxyz",
+          "description": "Tokenized account number."
+        },
+        "alias": {
+          "type": "string",
+          "example": "MY CHEQUING ACCOUNT",
+          "description": "Name asigned  to the account by the client to identify it easily."
+        },
+        "type": {
+          "type": "string",
+          "example": "TRADITIONAL_ACCOUNT",
+          "description": "Account type."
+        },
+        "description": {
+          "type": "string",
+          "example": "TRADITIONAL ACCOUNT",
+          "description": "Account description."
+        },
+        "status": {
+          "type": "string",
+          "example": "ACTIVE",
+          "description": "Current status."
+        },
+        "clabe": {
+          "type": "string",
+          "example": "99 0182 1632 0153 5556",
+          "description": "Clabe number."
+        },
+        "relatedCards": {
+          "$ref": "#/definitions/relatedCards"
+        },
+        "relatedPhone": {
+          "type": "string",
+          "example": "04455172634",
+          "description": "Phone number."
+        },
+        "mainBalance": {
+          "$ref": "#/definitions/balance"
+        },
+        "availableBalance": {
+          "$ref": "#/definitions/balance"
+        },
+        "pendingBalance": {
+          "$ref": "#/definitions/balance"
+        },
+        "withholdingBalance": {
+          "$ref": "#/definitions/balance"
+        },
+        "overdraftLimit": {
+          "$ref": "#/definitions/balance"
+        },
+        "latestTransactions": {
+          "$ref": "#/definitions/latestTransactions"
+        },
+        "transactionsListLink": {
+          "type": "string",
+          "example": "/me/accounts/{account_id}/transactions",
+          "description": "Link to transactions list."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Account details response for Mexico."
+    },
+    "relatedCards": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/relatedCard"
+      },
+      "description": "List of cards details."
+    },
+    "relatedCard": {
+      "properties": {
+        "displayNumber": {
+          "type": "string",
+          "example": "xxxx-xxxx-xxxx-5643",
+          "description": "Number account identification."
+        },
+        "cardLink": {
+          "type": "string",
+          "example": "/cards/{account_id}",
+          "description": "Link to card details."
+        },
+        "type": {
+          "type": "string",
+          "example": "ADDITIONAL",
+          "description": "Card type."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Card details."
+    },
+    "balance": {
+      "properties": {
+        "amount": {
+          "type": "number",
+          "format": "double",
+          "example": 1234.56,
+          "description": "Amount."
+        },
+        "currencyCode": {
+          "type": "string",
+          "description": "Currency codes - ISO 4217. https://en.wikipedia.org/wiki/ISO_4217",
+          "example": "MXN"
+        },
+        "lastUpdate": {
+          "type": "string",
+          "description": "Date last update was made. ISO 8601. https://en.wikipedia.org/wiki/ISO_8601",
+          "format": "date-time",
+          "example": "2019-03-14T01:43:19-06:00"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Object that represents balances."
+    },
+    "latestTransactions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/lastTransaction"
+      },
+      "description": "List of the latest transactions."
+    },
+    "lastTransaction": {
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "example": "3840",
+          "description": "Internal transaction reference to identification."
+        },
+        "creationDate": {
+          "type": "string",
+          "example": "2019-03-14T01:43:19-06:00",
+          "format": "date-time",
+          "description": "Date of creation. ISO 8601. https://en.wikipedia.org/wiki/ISO_8601"
+        },
+        "processedDate": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2019-03-14T01:43:19-06:00",
+          "description": "Date of processing. ISO 8601. https://en.wikipedia.org/wiki/ISO_8601"
+        },
+        "description": {
+          "type": "string",
+          "example": "payment",
+          "description": "Account description."
+        },
+        "transactionType": {
+          "type": "string",
+          "example": "DEBIT",
+          "description": "Transaction type."
+        },
+        "transactionCategory": {
+          "type": "string",
+          "description": "Type of category for a transaction",
+          "example": "withdraw money"
+        },
+        "amount": {
+          "$ref": "#/definitions/money"
+        },
+        "transactionDetailsLink": {
+          "type": "string",
+          "example": "/me/accounts/{account_id}/transactions/{transaction_id}",
+          "description": "Link to transaction details."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Info of transaction.",
+      "required": [
+        "transactionId"
+      ]
+    },
+    "lastTransactionMex": {
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "example": "3840",
+          "description": "Internal transaction reference to identification."
+        },
+        "creationDate": {
+          "type": "string",
+          "example": "2019-03-14T01:43:19-06:00",
+          "format": "date-time",
+          "description": "Date of creation. ISO 8601. https://en.wikipedia.org/wiki/ISO_8601"
+        },
+        "processedDate": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2019-03-14T01:43:19-06:00",
+          "description": "Date of processing. ISO 8601. https://en.wikipedia.org/wiki/ISO_8601"
+        },
+        "description": {
+          "type": "string",
+          "example": "payment",
+          "description": "Account description."
+        },
+        "transactionType": {
+          "type": "string",
+          "example": "DEBIT",
+          "description": "Transaction type."
+        },
+        "transactionCategory": {
+          "type": "string",
+          "description": "Type of category for a transaction",
+          "example": "withdraw money"
+        },
+        "amount": {
+          "$ref": "#/definitions/money"
+        },
+        "runningBalance": {
+          "$ref": "#/definitions/money"
+        },
+        "transactionDetailsLink": {
+          "type": "string",
+          "example": "/me/accounts/{account_id}/transactions/{transaction_id}",
+          "description": "Link to transaction details."
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "transactionId"
+      ],
+      "description": "Info of transaction for Mexico."
+    },
+    "transactionsListResponse": {
+      "properties": {
+        "displayNumber": {
+          "type": "string",
+          "example": "00***384",
+          "description": "Number account identification."
+        },
+        "accountId": {
+          "type": "string",
+          "example": "abcdefghijklmnopqrstuvwxyz",
+          "description": "Tokenized account number."
+        },
+        "alias": {
+          "type": "string",
+          "description": "Name asigned  to the account by the client to identify it easily.",
+          "example": "MY CHEQUING ACCOUNT"
+        },
+        "transactionsDataList": {
+          "$ref": "#/definitions/transactionsDataList"
+        },
+        "_links": {
+          "$ref": "#/definitions/transactionsListLinks"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Transactions list response."
+    },
+    "transactionsDataList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/transactionsDataListItem"
+      },
+      "description": "List of transactions."
+    },
+    "transactionsDataListItem": {
+      "type": "object",
+      "description": "Transactions details.",
+      "properties": {
+        "transactionDetails": {
+          "$ref": "#/definitions/transactionDetails"
+        },
+        "transactionDetailsLink": {
+          "type": "string",
+          "description": "Link to transaction details.",
+          "example": "/me/accounts/{account_id}/transactions/{transaction_id}"
+        }
+      }
+    },
+    "transactionsListLinks": {
+      "properties": {
+        "accountDetailsLink": {
+          "type": "string",
+          "description": "Link to account details.",
+          "example": "/me/accounts/{account_id}"
+        },
+        "_first": {
+          "type": "string",
+          "example": "/me/accounts/{account_id}/transactions",
+          "description": "Link to navigates to the first page according to input parameters."
+        },
+        "_prev": {
+          "type": "string",
+          "example": "/me/accounts/{account_id}/transactions?offset=1",
+          "description": "Link to navigates to the previous page according to input parameters."
+        },
+        "_next": {
+          "type": "string",
+          "example": "/me/accounts/{account_id}/transactions?offset=3",
+          "description": "Link to navigates to the next page according to input parameters."
+        },
+        "_last": {
+          "type": "string",
+          "description": "Link to navigates to the last page according to input parameters.",
+          "example": "/me/accounts/{account_id}/transactions?offset=99"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Links to account details and transactions list pagination."
+    },
+    "transactionDetailsResponse": {
+      "properties": {
+        "displayNumber": {
+          "type": "string",
+          "description": "Number account identification.",
+          "example": "00***384"
+        },
+        "accountId": {
+          "type": "string",
+          "description": "Tokenized account number.",
+          "example": "abcdefghijklmnopqrstuvwxyz"
+        },
+        "alias": {
+          "type": "string",
+          "example": "MY CHEQUING ACCOUNT",
+          "description": "Name asigned  to the account by the client to identify it easily."
+        },
+        "transactionDetails": {
+          "$ref": "#/definitions/transactionDetails"
+        },
+        "accountDetailsLink": {
+          "type": "string",
+          "description": "Link to account details.",
+          "example": "/me/accounts/{account_id}"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Transaction details response."
+    },
+    "transactionDetails": {
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "description": "Internal reference of transaction.",
+          "example": "3840"
+        },
+        "creationDate": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2019-03-15T09:00:00-06:00",
+          "description": "Date of creation. ISO 8601. https://en.wikipedia.org/wiki/ISO_8601"
+        },
+        "processedDate": {
+          "type": "string",
+          "example": "2019-03-15T09:00:00-06:00",
+          "format": "date-time",
+          "description": "Date of processing. ISO 8601. https://en.wikipedia.org/wiki/ISO_8601"
+        },
+        "description": {
+          "type": "string",
+          "example": "payment",
+          "description": "Transaction description."
+        },
+        "transactionType": {
+          "example": "DEBIT",
+          "type": "string",
+          "description": "Transaction type. Allowed values: credit, debit or pending"
+        },
+        "transactionCategory": {
+          "type": "string",
+          "description": "Type of category for a transaction",
+          "example": "withdraw money"
+        },
+        "amount": {
+          "$ref": "#/definitions/money"
+        },
+        "balanceResult": {
+          "$ref": "#/definitions/money"
+        },
+        "reference": {
+          "type": "string",
+          "example": "6534",
+          "description": "Number identifier of the movement provided by the customer."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Transaction details response.",
+      "required": [
+        "transactionId"
+      ]
+    },
+    "transactionDetailsMex": {
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "description": "Internal reference of transaction.",
+          "example": "3840"
+        },
+        "creationDate": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2019-03-15T09:00:00-06:00",
+          "description": "Date of creation. ISO 8601. https://en.wikipedia.org/wiki/ISO_8601"
+        },
+        "processedDate": {
+          "type": "string",
+          "example": "2019-03-15T09:00:00-06:00",
+          "format": "date-time",
+          "description": "Date of processing. ISO 8601. https://en.wikipedia.org/wiki/ISO_8601"
+        },
+        "description": {
+          "type": "string",
+          "example": "payment",
+          "description": "Transaction description."
+        },
+        "transactionType": {
+          "example": "DEBIT",
+          "type": "string",
+          "description": "Transaction type. Allowed values: credit, debit or pending"
+        },
+        "transactionCategory": {
+          "type": "string",
+          "description": "Type of category for a transaction",
+          "example": "withdraw money"
+        },
+        "amount": {
+          "$ref": "#/definitions/money"
+        },
+        "balanceResult": {
+          "$ref": "#/definitions/money"
+        },
+        "runningBalance": {
+          "$ref": "#/definitions/money"
+        },
+        "trackingNumber": {
+          "type": "string",
+          "example": "7834435",
+          "description": "Number identifier of the movement provided by the bank."
+        },
+        "displayCardNumber": {
+          "type": "string",
+          "example": "**** **** **** 0078",
+          "description": "Related card number to the account."
+        },
+        "transactionOrigin": {
+          "type": "string",
+          "example": "sucursal 421",
+          "description": "Identifies the place where transaction was created."
+        },
+        "reference": {
+          "type": "string",
+          "example": "6534",
+          "description": "Number identifier of the movement provided by the customer."
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "transactionId"
+      ],
+      "description": "Transaction details response for Mexico."
+    },
+    "errors": {
+      "properties": {
+        "errors": {
+          "$ref": "#/definitions/errorsList"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Error response."
+    },
+    "errorsList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/error"
+      },
+      "description": "List of errors."
+    },
+    "error": {
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Unique alphanumeric human readable error code.",
+          "example": "XXX"
+        },
+        "message": {
+          "type": "string",
+          "description": "Brief summary of issue reported.",
+          "example": "Message"
+        },
+        "level": {
+          "type": "string",
+          "description": "Different issue level: info, warning, error.",
+          "example": "Error"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the issue reported.",
+          "example": "Description"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Object that contains error information."
+    }
+  },
+  "tags": [],
+  "parameters": {
+    "Authorization": {
+      "name": "Authorization",
+      "type": "string",
+      "required": true,
+      "in": "header",
+      "description": "Authorization Security Header"
+    },
+    "X-Santander-Global-Id": {
+      "name": "X-Santander-Global-Id",
+      "type": "string",
+      "required": false,
+      "in": "header",
+      "description": "Traceability E2E Header"
+    }
+  }
+}
